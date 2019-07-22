@@ -1,6 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE OverloadedLists #-}
-
+--{-# LANGUAGE OverloadedStrings #-}
+--{-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -w #-}
 module Lib
     ( test
     ) where
@@ -11,7 +11,11 @@ import Data.Void
 
 import Parsing.Combinators
 import Parsing.Arithmetic
-
+import Parsing.LambdaExpressions
+import Parsing.PrettyPrinting
+import Evaluation.BetaReduction
+import Evaluation.Substitution
+import Evaluation.AlphaConversion
 
 --type Parser = Parsec Void T.Text
 --
@@ -30,7 +34,7 @@ import Parsing.Arithmetic
   <expr> ::= number { + number }
 
   parse_expr :: expr -> (expr -> expr -> expr) -> expr
-  parse_expr expr = expr + parse_expr
+    parse_expr expr = expr + parse_expr
 
 -}
 

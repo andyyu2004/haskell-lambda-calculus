@@ -1,17 +1,30 @@
-module Parsing.Expression
+module Parsing.LambdaExpressions
   (
-
+    Expr (..),
+    expression,
+    desugarAbstraction,
+    varNames,
+    -- Exporting all for use in ghci
+    variable,
+    lambdaBinding,
+    abstraction,
+    primary
   ) where
     
 import Parsing.Combinators
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import Data.Char
+import Text.Printf
 
 data Expr =
-  Variable Char
-  | Abstraction Char Expr
-  | Application Expr Expr
-  | Grouping Expr
+    Variable Char
+    | Abstraction Char Expr
+    | Application Expr Expr
+    | Binding String Expr
+    | Metavariable String
+--    | Grouping Expr (Unnecessary?)
+    deriving Show
 
 {-
   <expr> ::= <abstraction>
@@ -21,12 +34,66 @@ data Expr =
   <var> ::= ID
 -}
 
-expr :: Parser Expr
-expr = abstraction
+varNames :: String
+varNames = ['a' .. 'z']
+
+-- General function
+desugarAbstraction :: String -> String
+desugarAbstraction [] = []
+desugarAbstraction (x:xs)
+  | x == '\\' = '\\':desugarAbstraction' xs
+  | otherwise = x:desugarAbstraction xs
+
+-- When inside lambda abstraction
+desugarAbstraction' :: String -> String
+desugarAbstraction' [] = []
+desugarAbstraction' [x] = [x]
+desugarAbstraction' ts@(x:y:zs)
+  | elem x varNames && y /= '.' = x:'.':'\\':desugarAbstraction' (y:zs)
+  | otherwise = desugarAbstraction ts
+
+metavariable :: Parser String
+metavariable = (:) <$> (upperChar <|> numberChar) <*> many alphaNumChar
+
+expression :: Parser Expr
+expression = binding <* eof
+
+-- Metavariable binding
+binding :: Parser Expr
+binding = (symbol "let" >>
+          metavariable <* spaceConsumer >>= \name -> char '=' >> spaceConsumer >> Binding name <$> abstraction)
+          <|> abstraction
 
 abstraction :: Parser Expr
-abstraction = () <|> application
+abstraction = lambdaBinding <*> abstraction <|> application
+
+abstraction' :: (Expr -> Expr) -> Parser Expr
+abstraction' var = var <$> abstraction <|> application
+
+-- Parses the lambda and the variable, partially applies the Abstraction constructor
+lambdaBinding :: Parser (Expr -> Expr)
+lambdaBinding = Abstraction <$> (lambda *> variable <* dot)
+
+variable :: Parser Char
+variable = satisfy isAsciiLower <?> printf "variable name in %s" (show varNames)
+
+dot :: Parser Char
+dot = satisfy $ \x -> x == '.'
+
+lambda :: Parser Char
+lambda = char '\\'
 
 application :: Parser Expr
-application = primary `chainl1` 
+application = chainl1 primary $ binaryOperator " " Application
+
+primary :: Parser Expr
+primary = Variable <$> variable
+    <|> char '(' *> abstraction <* char ')' -- No explicit grouping created here, still works
+    <|> Metavariable <$> metavariable
+    <|> (lambdaBinding >>= abstraction') -- Allows for expressions like \x.x \x.x -> \x.(x (\x.x))
+
+
+
+
+
 

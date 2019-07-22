@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -w #-}
 
 module Parsing.Combinators
     ( test,
@@ -8,6 +9,7 @@ module Parsing.Combinators
       symbol,
       doubleStr,
       spaceConsumer,
+      binaryOperator
     ) where
 
 import Text.Megaparsec
@@ -15,6 +17,7 @@ import Text.Megaparsec.Char
 import qualified Data.Text as T
 import qualified Text.Megaparsec.Char.Lexer as L
 import Data.Void
+import Data.Functor
 
 -- ParsecT e s m a
 -- Parsec = ParsecT e s Identity a (non-transformer)
@@ -28,6 +31,9 @@ test = putStrLn "someFunc"
 
 digit :: Parser Char
 digit = satisfy (\c -> '0' <= c && c <= '9')
+
+binaryOperator :: T.Text -> (a -> a -> a) -> Parser (a -> a -> a)
+binaryOperator opsymbol op = string opsymbol $> op
 
 number :: Parser String
 number = many digit
