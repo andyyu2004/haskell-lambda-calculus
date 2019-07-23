@@ -5,8 +5,9 @@ module Evaluation.LambdaCombinators
 
 import Parsing.LambdaExpressions
 import Text.Megaparsec(parse)
-import Evaluation.BetaReduction(evaluate')
+import Evaluation.BetaReduction(evaluate)
 import Data.Text as T
+import Control.Monad.State
 import Data.Map.Lazy(fromList)
 
 lambdaCombinators :: [(String, Expr)]
@@ -18,6 +19,7 @@ lambdaCombinators =
     ("KI", kite),
     ("B", bluebird),
     ("T", thrush),
+    ("V", vireo),
 
     ("0", zero),
     ("1", one),
@@ -31,7 +33,9 @@ lambdaCombinators =
     ("FALSE", false),
     ("AND", andCombinator),
     ("OR", orCombinator),
-    ("NOT", notCombinator)
+    ("NOT", notCombinator),
+    ("BEQ", beq),
+    ("XOR", xor)
   ]
 
 identity :: Expr
@@ -52,14 +56,27 @@ bluebird = forceParse "\\fga.f (g a)"
 thrush :: Expr
 thrush = forceParse "\\ab.b a"
 
+-- Partially apply two values and then pass a binary function to use value
+-- A form of data structure
+vireo :: Expr
+vireo = forceParse "\\abf.f a b"
+
 false :: Expr
-false = forceEvaluate "K"
+false = forceEvaluate "KI"
 
 true :: Expr
-true = forceEvaluate "KI"
+true = forceEvaluate "K"
+
+-- Boolean equality
+beq :: Expr
+beq = forceEvaluate "\\pq.p q (NOT q)"
+
+xor :: Expr
+xor = forceEvaluate "\\pq.p (NOT q) q"
 
 orCombinator :: Expr
-orCombinator = forceParse "\\pq.p p q"
+--orCombinator = forceParse "\\pq.p p q"
+orCombinator = forceEvaluate "M"
 
 andCombinator :: Expr
 andCombinator = forceParse "\\pq.p q p"
@@ -97,8 +114,12 @@ forceParse :: String -> Expr
 forceParse = unwrap . parse expression "lambdacalculus" . T.pack . desugarAbstraction
 
 -- Use if metavariables are part of the expression
+-- String -> Expr ->
 forceEvaluate :: String -> Expr
-forceEvaluate = unwrap . fst . evaluate' (fromList lambdaCombinators) . forceParse
+forceEvaluate expr = unwrap $ evalState (evaluate $ forceParse expr) (fromList lambdaCombinators)
+
+--forceEvaluate :: String -> Expr
+--forceEvaluate = unwrap . fst . evaluate' (fromList lambdaCombinators) . forceParse
 
 
 

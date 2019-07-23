@@ -56,17 +56,23 @@ metavariable :: Parser String
 metavariable = (:) <$> (upperChar <|> numberChar) <*> many alphaNumChar
 
 expression :: Parser Expr
-expression = binding <* eof
+expression = letBinding <* eof
 
 -- Metavariable binding
+
+-- Extra function so that let X = Y = E is valid instead of let X = let Y = E
+letBinding :: Parser Expr
+letBinding = ("let" >> spaceConsumer >> binding)
+             <|> abstraction
+
 binding :: Parser Expr
-binding = (symbol "let" >>
-          metavariable <* spaceConsumer >>= \name -> char '=' >> spaceConsumer >> Binding name <$> abstraction)
+binding = (Binding <$> metavariable <* spaceConsumer <*> (char '=' >> spaceConsumer >> binding <|> abstraction))
           <|> abstraction
 
 abstraction :: Parser Expr
 abstraction = lambdaBinding <*> abstraction <|> application
 
+-- For primary parsing where the binding is already parsed. Otherwise infinite loop if abstraction is called directly
 abstraction' :: (Expr -> Expr) -> Parser Expr
 abstraction' var = var <$> abstraction <|> application
 

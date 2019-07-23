@@ -21,20 +21,32 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- text
+- megaparsec
+- containers
+- mtl
+- unordered-containers
 
 library:
   source-dirs: src
+  default-extensions:
+    - OverloadedStrings
+  ghc-options:
+    - -Wall
 
 executables:
   h-lambda-calculus-exe:
     main:                Main.hs
     source-dirs:         app
+    default-extensions:
+      - OverloadedStrings
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - h-lambda-calculus
+    - haskeline
 
 tests:
   h-lambda-calculus-test:
