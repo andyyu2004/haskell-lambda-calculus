@@ -5,7 +5,7 @@ import Evaluation.AlphaConversion
 --import Debug.Trace(trace)
 --import Text.Printf(printf)
 
--- Substitutes variable var with the expr 'with' in expresion 'expression'
+-- Substitutes variable var with the expr 'with' in expression 'expression'
 substitute :: Expr -> Char -> Expr -> Expr
 substitute with var expression = case expression of
     Application left right -> Application (sub left) (sub right)
@@ -15,7 +15,7 @@ substitute with var expression = case expression of
     Abstraction name expr
         -- Do not substitute bound variables
         | name == var -> expression
-        | isFree name with -> let newname = generateName varNames with in
+        | isFree name with -> let newname = generateName varNames expr in -- by definition I think expr should be with, but somethings go wrong
             Abstraction newname $ sub $ alphaConvert name newname expr
         | otherwise -> Abstraction name $ sub expr
     _ -> error "Attempted substitution of binding or metavariable"

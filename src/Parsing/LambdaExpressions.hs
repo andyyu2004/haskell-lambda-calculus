@@ -66,7 +66,7 @@ letBinding = ("let" >> spaceConsumer >> binding)
              <|> abstraction
 
 binding :: Parser Expr
-binding = (Binding <$> metavariable <* spaceConsumer <*> (char '=' >> spaceConsumer >> binding <|> abstraction))
+binding = (Binding <$> metavariable <* spaceConsumer <*> (char '=' >> spaceConsumer >> abstraction))-- binding <|> abstraction))
           <|> abstraction
 
 abstraction :: Parser Expr

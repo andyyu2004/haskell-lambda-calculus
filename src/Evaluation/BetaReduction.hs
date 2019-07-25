@@ -52,7 +52,7 @@ expandBindings (Application left right) = do
     r <- expandBindings right
     return $ Application <$> l <*> r
 expandBindings (Metavariable name) = getVar name >>= \case
-    Just x -> return $ Right x
+    Just x -> expandBindings x
     Nothing -> return $ Left $ printf "Undefined metavariable %s" name
 expandBindings var = return $ Right var
 

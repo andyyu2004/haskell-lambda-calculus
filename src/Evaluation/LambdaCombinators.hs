@@ -18,6 +18,7 @@ lambdaCombinators =
     ("K", kestrel),
     ("KI", kite),
     ("B", bluebird),
+    ("S", starling),
     ("T", thrush),
     ("V", vireo),
 
@@ -52,6 +53,9 @@ kite = forceParse "\\xy.y"
 
 bluebird :: Expr
 bluebird = forceParse "\\fga.f (g a)"
+
+starling :: Expr
+starling = forceParse "\\abc.a c (b c)"
 
 thrush :: Expr
 thrush = forceParse "\\ab.b a"
