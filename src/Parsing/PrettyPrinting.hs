@@ -10,7 +10,7 @@ import Text.Printf
 
 parenthesized :: Expr -> String
 --parenthesized (Grouping expr) = printf "(%s)" $ parenthesized expr
-parenthesized (Abstraction var expr) = printf "(\\%c.(%s))" var $ parenthesized expr
+parenthesized (Abstraction var expr) = printf "(λ%c.(%s))" var $ parenthesized expr
 parenthesized (Application left right) = printf "(%s) (%s)" (parenthesized left) (parenthesized right)
 parenthesized (Variable var) = printf "%c" var
 parenthesized (Binding name expr) = printf "%s <- %s" name $ parenthesized expr
@@ -21,7 +21,7 @@ nospaces :: Expr -> String
 --formatExpr (Grouping expr) = printf "(%s)" $ formatExpr expr
 nospaces (Variable var) = printf "%c" var
 nospaces (Binding name expr) = printf "%s <- %s" name $ nospaces expr
-nospaces expr@(Abstraction _ _) = printf "\\%s" $ formatAbstraction expr
+nospaces expr@(Abstraction _ _) = printf "λ%s" $ formatAbstraction expr
 nospaces (Metavariable name) = printf "%s" name
 nospaces (Application left right) = case right of
     -- Required parentheses on right side in right associative application
@@ -44,7 +44,7 @@ formatExpr :: Expr -> String
 --formatExpr (Grouping expr) = printf "(%s)" $ formatExpr expr
 formatExpr (Variable var) = printf "%c" var
 formatExpr (Binding name expr) = printf "%s <- %s" name $ formatExpr expr
-formatExpr expr@(Abstraction _ _) = printf "\\%s" $ formatAbstraction' expr
+formatExpr expr@(Abstraction _ _) = printf "λ%s" $ formatAbstraction' expr
 formatExpr (Metavariable name) = printf "%s" name
 formatExpr (Application left right) = case right of
     -- Required parentheses on right side in right associative application
