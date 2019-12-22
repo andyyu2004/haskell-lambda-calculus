@@ -8,26 +8,30 @@ module Parsing.LambdaExpressions
     variable,
     lambdaBinding,
     abstraction,
-    primary
+    primary,
+    spacedword,
   ) where
-    
+
 import Parsing.Combinators
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Char
+import Data.Text
 import Text.Printf
 
-data Expr =
-    Variable Char
-    | Abstraction Char Expr
-    | Application Expr Expr
-    | Binding String Expr
-    | Metavariable String
---    | Grouping Expr (Unnecessary?)
+data Expr
+  = Variable Char
+  | Abstraction Char Expr
+  | Application Expr Expr
+  | Binding String Expr
+  | Metavariable String
+  | Let String Expr Expr
+--  | Grouping Expr (Unnecessary?)
     deriving Show
 
 {-
-  <expr> ::= <abstraction>
+  <expr> ::= <let>
+  <let> ::= let ID = <expr> in <expr>
   <abstraction> ::= \<var>.<abstraction> | <application>
   <application> = <primary>  { < > <primary> }
   <primary> ::= <var> | ( <expr> )
@@ -56,18 +60,30 @@ metavariable :: Parser String
 metavariable = (:) <$> (upperChar <|> numberChar) <*> many alphaNumChar
 
 expression :: Parser Expr
-expression = letBinding <* eof
+expression = letexpr <* eof
 
 -- Metavariable binding
-
 -- Extra function so that let X = Y = E is valid instead of let X = let Y = E
-letBinding :: Parser Expr
-letBinding = ("let" >> spaceConsumer >> binding)
-             <|> abstraction
+-- Changed meta syntax to 'var' to account for the introduction on let bindings
+-- letBinding :: Parser Expr
+-- letBinding = ("var" >> spaceConsumer >> binding)
+--              <|> abstraction
 
-binding :: Parser Expr
-binding = (Binding <$> metavariable <* spaceConsumer <*> (char '=' >> spaceConsumer >> abstraction))-- binding <|> abstraction))
-          <|> abstraction
+-- binding :: Parser Expr
+-- binding = (Binding <$> metavariable <* spaceConsumer <*> (char '=' >> spaceConsumer >> abstraction))-- binding <|> abstraction))
+--           <|> letexpr
+
+letexpr :: Parser Expr
+letexpr = (do
+  _ <- spacedword "let"
+  var  <- variable
+  _ <- spacedword "="
+  expr <- abstraction <* char '!' -- Cheap way to avoid abstraction eating too much, delimit with a !
+  _ <- spacedword "in"
+  Let [var] expr <$> abstraction) <|> abstraction
+
+spacedword :: Text -> Parser Text
+spacedword word = spaceConsumer *> string word <* spaceConsumer
 
 abstraction :: Parser Expr
 abstraction = lambdaBinding <*> abstraction <|> application

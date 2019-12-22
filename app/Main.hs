@@ -34,16 +34,18 @@ loop vmap = do
           Right x -> do
             (outputStrLn . ("raw: " ++) . show) x
             outputStrLn ("parenthesized: " ++ parenthesized x)
-            let (expr, state) = runState (evaluate x) vmap
-            case expr of
-              Left err -> outputStrLn err >> loop state
-              Right x-> do
-                (outputStrLn . ("β-reduction (raw): " ++) .  show) x
-                (outputStrLn . ("β-reduction (parenthesized): " ++) . parenthesized) x
-                (outputStrLn . ("β-reduction (spaces): " ++) . formatExpr) x
-                (outputStrLn . ("β-reduction: " ++) . nospaces) x
-                outputStr "\n"
-                loop state
+            outputStrLn $ nospaces x
+            loop M.empty
+            -- let (expr, state) = runState (evaluate x) vmap
+            -- case expr of
+            --   Left err -> outputStrLn err >> loop state
+            --   Right x-> do
+            --     (outputStrLn . ("β-reduction (raw): " ++) .  show) x
+            --     (outputStrLn . ("β-reduction (parenthesized): " ++) . parenthesized) x
+            --     (outputStrLn . ("β-reduction (spaces): " ++) . formatExpr) x
+            --     (outputStrLn . ("β-reduction: " ++) . nospaces) x
+            --     outputStr "\n"
+            --     loop state
 
 
 handleCommand :: VariableMap -> String -> InputT IO ()
