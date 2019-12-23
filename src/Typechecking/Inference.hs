@@ -49,7 +49,8 @@ infer (Ctx ctx) = \case
       (s1, tx) <- infer (substitute s0 $ Ctx ctx) x
       tret     <- newTVar
       s2       <- unify (substitute s1 tf) $ TArrow tx tret
-      let composed = s0 `compose` s1 `compose` s2
+      -- Why does this need to be in reverse to work? e.g. in \wxyz.wxyz
+      let composed = s2 `compose` s1 `compose` s0
       return (composed, substitute s2 tret)
 
 

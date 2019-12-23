@@ -1,10 +1,11 @@
 {-# LANGUAGE LambdaCase #-}
-module Typechecking.Types (Type(..), Types(..), Substitution, compose, newTVar, TI) where
+module Typechecking.Types (Type(..), Types(..), Substitution, compose, newTVar, TI, normTVars) where
 
 import Data.Maybe
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Control.Monad.State
+import Debug.Trace(trace)
 
 data Type
   = TInt
@@ -21,6 +22,25 @@ instance Show Type where
     TArrow l r -> "(" ++ show l ++ " -> " ++ show r ++ ")"
 
 type Substitution = Map.Map String Type
+
+-- Renames type variables from a-z a_i-z_i in order of appearance
+normTVars :: Type -> Type
+normTVars t = evalState (normalizeTypeVariables t)  (Map.empty, map (:[]) ['a'..'z'], 0, 0)
+
+normalizeTypeVariables :: Type -> State (Map.Map String String, [String], Int, Int) Type
+normalizeTypeVariables = \case
+  TInt       -> return TInt
+  TBool      -> return TBool
+  TArrow l r -> TArrow <$> normalizeTypeVariables l <*> normalizeTypeVariables r
+  TVar t     -> do
+    (vars, xs, i, n) <- get
+    case Map.lookup t vars of
+      Just var -> return $ TVar var
+      Nothing -> do
+        let var = if n == 0 then xs !! i else xs !! i ++ show n
+        let newmap = Map.insert t var vars in
+          if i == length xs - 1 then put (newmap, xs, 0, n + 1) else put (newmap, xs, i + 1, n)
+        return $ TVar var
 
 -- Left-to-right composition
 compose :: Substitution -> Substitution -> Substitution
