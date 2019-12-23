@@ -20,8 +20,8 @@ import Data.Text
 import Text.Printf
 
 data Expr
-  = Variable Char
-  | Abstraction Char Expr
+  = Variable String
+  | Abstraction String Expr
   | Application Expr Expr
   | Binding String Expr
   | Metavariable String
@@ -40,6 +40,7 @@ data Expr
 
 varNames :: String
 varNames = ['a' .. 'z']
+
 
 -- General function
 desugarAbstraction :: String -> String
@@ -80,7 +81,7 @@ letexpr = (do
   _ <- spacedword "="
   expr <- abstraction <* char '!' -- Cheap way to avoid abstraction eating too much, delimit with a !
   _ <- spacedword "in"
-  Let [var] expr <$> abstraction) <|> abstraction
+  Let var expr <$> abstraction) <|> abstraction
 
 spacedword :: Text -> Parser Text
 spacedword word = spaceConsumer *> string word <* spaceConsumer
@@ -96,8 +97,8 @@ abstraction' var = var <$> abstraction <|> application
 lambdaBinding :: Parser (Expr -> Expr)
 lambdaBinding = Abstraction <$> (lambda *> variable <* dot)
 
-variable :: Parser Char
-variable = satisfy isAsciiLower <?> printf "variable name in %s" (show varNames)
+variable :: Parser String
+variable = many $ satisfy isAsciiLower
 
 dot :: Parser Char
 dot = satisfy $ \x -> x == '.'

@@ -6,7 +6,7 @@ import Evaluation.AlphaConversion
 --import Text.Printf(printf)
 
 -- Substitutes variable var with the expr 'with' in expression 'expression'
-substitute :: Expr -> Char -> Expr -> Expr
+substitute :: Expr -> String -> Expr -> Expr
 substitute with var expression = case expression of
     Application left right -> Application (sub left) (sub right)
     Variable x -> if x == var then with else expression
@@ -22,7 +22,7 @@ substitute with var expression = case expression of
   where sub = substitute with var
 
 -- A variable x is free if it is not bound in the body of an abstraction
-isFree :: Char -> Expr -> Bool
+isFree :: String -> Expr -> Bool
 isFree var expression = case expression of
     Application left right -> free left || free right
     Variable name          -> var == name
@@ -31,8 +31,8 @@ isFree var expression = case expression of
   where free = isFree var
 
 -- Where string is a list of chars of valid variable names
-generateName :: String -> Expr -> Char
+generateName :: String -> Expr -> String
 generateName [] _ = error "Not enough variable names"
 generateName (x:xs) expr
-  | not $ isFree x expr = x
+  | not $ isFree [x] expr = [x]
   | otherwise = generateName xs expr

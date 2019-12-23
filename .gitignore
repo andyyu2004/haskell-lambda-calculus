@@ -2,4 +2,4 @@
 dist
 out
 h-lambda-calculus.cabal
-*~.idea
+.idea

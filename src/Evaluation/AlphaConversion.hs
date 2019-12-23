@@ -5,7 +5,7 @@ module Evaluation.AlphaConversion
 
 import Parsing.LambdaExpressions
 
-alphaConvert :: Char -> Char -> Expr -> Expr
+alphaConvert :: String -> String -> Expr -> Expr
 alphaConvert from to (Application left right) =
     Application (alphaConvert from to left) (alphaConvert from to right)
 --alphaConvert from to (Grouping expr) = Grouping $ alphaConvert from to expr
