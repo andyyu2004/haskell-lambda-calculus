@@ -17,14 +17,14 @@ import Control.Monad.State
 
 -- (\x.E) N -> E [x -> N]
 betareduce :: Expr -> Expr
-betareduce (Abstraction name expr) = Abstraction name $ betareduce expr
-betareduce var@(Variable _) = var
+betareduce (Lambda name expr) = Lambda name $ betareduce expr
+betareduce var@(Var _) = var
 betareduce (Binding _ expr) = betareduce expr
-betareduce (Application left right) =
+betareduce (App left right) =
   -- Need to betareduce left here otherwise will get stuck in beta reduce abstraction infinite loop
   case betareduce left of
-    Abstraction name expr -> betareduce $ substitute (betareduce right) name $ betareduce expr
-    _ -> Application (betareduce left) $ betareduce right
+    Lambda name expr -> betareduce $ substitute (betareduce right) name $ betareduce expr
+    _ -> App (betareduce left) $ betareduce right
 betareduce (Metavariable _) = error "Betareduction of metavariable"
 
 -- fmap :: (a -> b) -> m a -> m b
@@ -46,11 +46,11 @@ evaluate expr = expandBindings expr >>= \x -> return $ betareduce <$> x
 
 expandBindings :: Expr -> State VariableMap (Either String Expr)
 expandBindings (Binding name expr) = insertVar name expr >>= expandBindings
-expandBindings (Abstraction name expr) = expandBindings expr >>= \x -> return $ fmap (Abstraction name) x
-expandBindings (Application left right) = do
+expandBindings (Lambda name expr) = expandBindings expr >>= \x -> return $ fmap (Lambda name) x
+expandBindings (App left right) = do
     l <- expandBindings left
     r <- expandBindings right
-    return $ Application <$> l <*> r
+    return $ App <$> l <*> r
 expandBindings (Metavariable name) = getVar name >>= \case
     Just x -> expandBindings x
     Nothing -> return $ Left $ printf "Undefined metavariable %s" name

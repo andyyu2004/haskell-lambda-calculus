@@ -17,6 +17,7 @@ import qualified Data.Map.Lazy as M -- No hashmap in haskell?
 import Control.Monad.State
 import Typechecking.Inference(runInference)
 import Typechecking.Types(normTVars)
+import Typechecking.Constraints
 
 main :: IO ()
 main = runInputT defaultSettings $ loop $ M.fromList lambdaCombinators
@@ -38,6 +39,11 @@ loop vmap = do
             outputStrLn ("parenthesized: " ++ parenthesized x)
             outputStrLn $ nospaces x
             outputStrLn $ (show . normTVars . runInference) x
+--            let annotated = runAnnotation x
+--            let constraints = genConstraints annotated
+--            outputStrLn . show $ annotated
+--            outputStrLn . show . genConstraints $ annotated
+            outputStrLn . show . normTVars . runInference $ x
             loop M.empty
             -- let (expr, state) = runState (evaluate x) vmap
             -- case expr of

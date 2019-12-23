@@ -18,13 +18,16 @@ import Text.Megaparsec.Char
 import Data.Char
 import Data.Text
 import Text.Printf
+import Data.Functor (($>))
 
 data Expr
-  = Variable String
-  | Abstraction String Expr
-  | Application Expr Expr
+  = Var String
+  | Lambda String Expr
+  | App Expr Expr
   | Binding String Expr
   | Metavariable String
+  | EBool Bool
+  | EInt Int
   | Let String Expr Expr
 --  | Grouping Expr (Unnecessary?)
     deriving Show
@@ -91,11 +94,11 @@ abstraction = lambdaBinding <*> abstraction <|> application
 
 -- For primary parsing where the binding is already parsed. Otherwise infinite loop if abstraction is called directly
 abstraction' :: (Expr -> Expr) -> Parser Expr
-abstraction' var = var <$> abstraction <|> application
+abstraction' var = (var <$> abstraction) <|> application
 
 -- Parses the lambda and the variable, partially applies the Abstraction constructor
 lambdaBinding :: Parser (Expr -> Expr)
-lambdaBinding = Abstraction <$> (lambda *> variable <* dot)
+lambdaBinding = Lambda <$> (lambda *> variable <* dot)
 
 variable :: Parser String
 variable = many $ satisfy isAsciiLower
@@ -107,11 +110,13 @@ lambda :: Parser Char
 lambda = char '\\'
 
 application :: Parser Expr
-application = chainl1 primary $ binaryOperator " " Application
+application = chainl1 primary $ binaryOperator " " App
 
 primary :: Parser Expr
-primary = Variable <$> variable
-    <|> char '(' *> abstraction <* char ')' -- No explicit grouping created here, still works
+primary = char '(' *> abstraction <* char ')' -- No explicit grouping created here, still works
+    <|> EBool <$> (string "false" $> False)
+    <|> EBool <$> (string "true" $> True)
+    <|> Var <$> variable
     <|> Metavariable <$> metavariable
     <|> (lambdaBinding >>= abstraction') -- Allows for expressions like \x.x \x.x -> \x.(x (\x.x))
 

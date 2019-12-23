@@ -19,7 +19,9 @@ instance Show Type where
     TInt       -> "Int"
     TBool      -> "Bool"
     TVar t     -> t
-    TArrow l r -> "(" ++ show l ++ " -> " ++ show r ++ ")"
+    TArrow l r -> case l of
+      TArrow _ _ -> "(" ++ show l ++ ")" ++ " -> " ++ show r
+      _          -> show l ++ " -> " ++  show r
 
 type Substitution = Map.Map String Type
 
@@ -43,12 +45,15 @@ normalizeTypeVariables = \case
         return $ TVar var
 
 -- Left-to-right composition
+-- Map.union is left-biased!
 compose :: Substitution -> Substitution -> Substitution
-compose f g = let composed = Map.map (substitute f) g in Map.union composed f
+compose f g = let composed = Map.map (substitute g) f in Map.union composed g
 
 class Types a where
+  -- Apply substitution
   substitute :: Substitution -> a -> a
   ftv :: a -> Set.Set String
+
 
 instance Types a => Types [a] where
   substitute s = map $ substitute s
